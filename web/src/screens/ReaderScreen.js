@@ -21,16 +21,16 @@ import {
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage'; 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import api, { incrementView } from '../services/api';
-import CommentsSection from '../components/CommentsSection'; 
+import CommentsSection from '../components/CommentsSection';
 import { AuthContext } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { getOfflineChapterContent } from '../services/offlineStorage';
 
 const { width, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const DRAWER_WIDTH = width * 0.85; 
-const BOTTOM_DRAWER_HEIGHT = SCREEN_HEIGHT * 0.5; // نصف ارتفاع الشاشة
+const DRAWER_WIDTH = width * 0.85;
+const BOTTOM_DRAWER_HEIGHT = SCREEN_HEIGHT * 0.5;
 
 const ZEUS_SECRET = "Z3uS_N0v3l_2026_S3cr3t_K3y";
 
@@ -38,8 +38,7 @@ const ZEUS_SECRET = "Z3uS_N0v3l_2026_S3cr3t_K3y";
 const decryptContent = (encoded) => {
     try {
         if (!encoded) return "";
-        
-        // Safe atob polyfill for React Native
+
         const safeAtob = (str) => {
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
             let output = '';
@@ -65,25 +64,19 @@ const decryptContent = (encoded) => {
             }
             return output;
         };
-        
-        // Step 1: Base64 decode
+
         const binaryStr = safeAtob(encoded);
         let result = "";
-        
-        // Step 2: Reverse transformations
+
         for (let i = 0; i < binaryStr.length; i++) {
             let charCode = binaryStr.charCodeAt(i);
-            // Reverse rotation: subtract 3
             charCode = (charCode - 3 + 256) % 256;
-            // Reverse offset: subtract (i*7)%13
             const offset = (i * 7) % 13;
             charCode = (charCode - offset + 256) % 256;
-            // Reverse XOR
             charCode = charCode ^ ZEUS_SECRET.charCodeAt(i % ZEUS_SECRET.length);
             result += String.fromCharCode(charCode);
         }
-        
-        // Step 3: URI decode
+
         return decodeURIComponent(result);
     } catch (e) {
         console.warn("Decryption error:", e);
@@ -98,7 +91,6 @@ const obfuscate = (text) => {
         for (let i = 0; i < encoded.length; i++) {
             result += String.fromCharCode(encoded.charCodeAt(i) ^ ZEUS_SECRET.charCodeAt(i % ZEUS_SECRET.length));
         }
-        // Simple btoa polyfill for React Native
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
         let output = '';
         for (let block, charCode, idx = 0, map = chars; result.charAt(idx | 0) || (map = '=', idx % 1); output += map.charAt(63 & block >> 8 - idx % 1 * 8)) {
@@ -112,7 +104,7 @@ const obfuscate = (text) => {
     }
 };
 
-// --- CUSTOM SLIDER (No Native Dependencies) ---
+// --- CUSTOM SLIDER ---
 const CustomSlider = ({ value, onValueChange, minimumValue, maximumValue, step = 1, thumbColor='#fff', activeColor='#4a7cc7' }) => {
     const [sliderWidth, setSliderWidth] = useState(0);
 
@@ -120,41 +112,34 @@ const CustomSlider = ({ value, onValueChange, minimumValue, maximumValue, step =
         if (sliderWidth === 0) return;
         const locationX = evt.nativeEvent.locationX;
         let percentage = locationX / sliderWidth;
-        // Clamp between 0 and 1
         percentage = Math.max(0, Math.min(1, percentage));
-        
         let newValue = minimumValue + percentage * (maximumValue - minimumValue);
-        
         if (step) {
             newValue = Math.round(newValue / step) * step;
         }
-        
         onValueChange(newValue);
     };
 
     const percentage = ((value - minimumValue) / (maximumValue - minimumValue)) * 100;
 
     return (
-        <View 
-            style={{ height: 40, justifyContent: 'center', flex: 1 }} 
+        <View
+            style={{ height: 40, justifyContent: 'center', flex: 1 }}
             onLayout={(e) => setSliderWidth(e.nativeEvent.layout.width)}
         >
             <TouchableWithoutFeedback onPress={handleTouch}>
                 <View style={{height: 40, justifyContent: 'center'}}>
-                    {/* Track Background */}
                     <View style={{ height: 6, backgroundColor: '#333', borderRadius: 3, overflow: 'hidden' }}>
-                        {/* Active Track */}
                         <View style={{ height: '100%', width: `${percentage}%`, backgroundColor: activeColor }} />
                     </View>
-                    {/* Thumb */}
-                    <View style={{ 
-                        position: 'absolute', 
-                        left: `${percentage}%`, 
-                        marginLeft: -10, // Center thumb (20px width / 2)
-                        width: 20, 
-                        height: 20, 
-                        borderRadius: 10, 
-                        backgroundColor: thumbColor, 
+                    <View style={{
+                        position: 'absolute',
+                        left: `${percentage}%`,
+                        marginLeft: -10,
+                        width: 20,
+                        height: 20,
+                        borderRadius: 10,
+                        backgroundColor: thumbColor,
                         shadowColor: "#000",
                         shadowOffset: { width: 0, height: 2 },
                         shadowOpacity: 0.3,
@@ -187,8 +172,28 @@ const ADVANCED_COLORS = [
     { color: '#ef4444', name: 'red' },
     { color: '#3b82f6', name: 'blue' },
     { color: '#4ade80', name: 'green' },
+    { color: '#06b6d4', name: 'cyan' },
+    { color: '#8b5cf6', name: 'violet' },
+    { color: '#f472b6', name: 'rose' },
+    { color: '#34d399', name: 'emerald' },
+    { color: '#f87171', name: 'coral' },
+    { color: '#facc15', name: 'gold' },
+    { color: '#818cf8', name: 'indigo' },
     { color: '#888888', name: 'gray' },
     { color: '#000000', name: 'black' },
+];
+
+const BG_COLOR_PRESETS = [
+    { color: '#0a0a0a', name: 'أسود' },
+    { color: '#2d2d2d', name: 'داكن' },
+    { color: '#1a1a2e', name: 'كحلي' },
+    { color: '#1a0a0a', name: 'أحمر داكن' },
+    { color: '#0a1a0a', name: 'أخضر داكن' },
+    { color: '#0a0a1a', name: 'أزرق داكن' },
+    { color: '#ffffff', name: 'أبيض' },
+    { color: '#f5f0e8', name: 'بيج' },
+    { color: '#e8f4f0', name: 'نعناع فاتح' },
+    { color: '#fdf6e3', name: 'كريمي' },
 ];
 
 const QUOTE_STYLES = [
@@ -202,7 +207,7 @@ const QUOTE_STYLES = [
 export default function ReaderScreen({ route, navigation }) {
 const { userInfo } = useContext(AuthContext);
 const { showToast } = useToast();
-const { novel, chapterId, isOfflineMode, availableChapters } = route.params; 
+const { novel, chapterId, isOfflineMode, availableChapters } = route.params;
 
 const [chapter, setChapter] = useState(null);
 const [loading, setLoading] = useState(true);
@@ -217,53 +222,70 @@ const [textColor, setTextColor] = useState('#e0e0e0');
 const [fontFamily, setFontFamily] = useState(FONT_OPTIONS[0]);
 const [showMenu, setShowMenu] = useState(false);
 const [showSettings, setShowSettings] = useState(false);
-const [settingsView, setSettingsView] = useState('main'); 
-// new: text brightness
+const [settingsView, setSettingsView] = useState('main');
 const [textBrightness, setTextBrightness] = useState(1);
+const [bgColorHexInput, setBgColorHexInput] = useState('#0a0a0a');
+const [textColorHexInput, setTextColorHexInput] = useState('#e0e0e0');
 
 // --- ADVANCED FORMATTING STATE ---
 const [enableDialogue, setEnableDialogue] = useState(false);
 const [dialogueColor, setDialogueColor] = useState('#4ade80');
-const [dialogueSize, setDialogueSize] = useState(100); 
+const [dialogueSize, setDialogueSize] = useState(100);
 const [hideQuotes, setHideQuotes] = useState(false);
-const [selectedQuoteStyle, setSelectedQuoteStyle] = useState('all'); 
+const [selectedQuoteStyle, setSelectedQuoteStyle] = useState('all');
 
 const [enableMarkdown, setEnableMarkdown] = useState(false);
-const [markdownColor, setMarkdownColor] = useState('#ffffff'); 
-const [markdownSize, setMarkdownSize] = useState(100); 
+const [markdownColor, setMarkdownColor] = useState('#ffffff');
+const [markdownSize, setMarkdownSize] = useState(100);
 const [hideMarkdownMarks, setHideMarkdownMarks] = useState(false);
-const [selectedMarkdownStyle, setSelectedMarkdownStyle] = useState('all'); 
+const [selectedMarkdownStyle, setSelectedMarkdownStyle] = useState('all');
+
+// --- NEW: BRACKET FORMATTING STATE ---
+const [enableBracket, setEnableBracket] = useState(false);
+const [bracketColor, setBracketColor] = useState('#3b82f6');
+const [bracketSize, setBracketSize] = useState(110);
+const [hideBracketMarks, setHideBracketMarks] = useState(false);
+const [selectedBracketStyle, setSelectedBracketStyle] = useState('all');
+
+// --- NEW: CUSTOM FORMATTING STATE ---
+const [enableCustom, setEnableCustom] = useState(false);
+const [customOpenMark, setCustomOpenMark] = useState('');
+const [customCloseMark, setCustomCloseMark] = useState('');
+const [customColor, setCustomColor] = useState('#f97316');
+const [customSize, setCustomSize] = useState(105);
+const [hideCustomMarks, setHideCustomMarks] = useState(false);
 
 // --- REPLACEMENTS STATE ---
-const [folders, setFolders] = useState([]); 
-const [currentFolderId, setCurrentFolderId] = useState(null); 
+const [folders, setFolders] = useState([]);
+const [currentFolderId, setCurrentFolderId] = useState(null);
 const [replacementViewMode, setReplacementViewMode] = useState('folders');
-const [replaceSearch, setReplaceSearch] = useState(''); 
+const [replaceSearch, setReplaceSearch] = useState('');
 const [replaceSortDesc, setReplaceSortDesc] = useState(true);
 
 const [newOriginal, setNewOriginal] = useState('');
 const [newReplacement, setNewReplacement] = useState('');
-const [editingId, setEditingId] = useState(null); 
+const [editingId, setEditingId] = useState(null);
 
 const [showFolderModal, setShowFolderModal] = useState(false);
 const [newFolderName, setNewFolderName] = useState('');
 
 const [cleanerWords, setCleanerWords] = useState([]);
 const [newCleanerWord, setNewCleanerWord] = useState('');
-const [cleanerEditingId, setCleanerEditingId] = useState(null); 
+const [cleanerEditingId, setCleanerEditingId] = useState(null);
+const [cleanerOldWord, setCleanerOldWord] = useState('');
 const [cleaningLoading, setCleaningLoading] = useState(false);
 
 const [copyrightStartText, setCopyrightStartText] = useState('');
 const [copyrightEndText, setCopyrightEndText] = useState('');
 const [copyrightLoading, setCopyrightLoading] = useState(false);
 const [copyrightStyle, setCopyrightStyle] = useState({
-    color: '#888888', opacity: 1, alignment: 'center', isBold: true, fontSize: 14 
+    color: '#888888', opacity: 1, alignment: 'center', isBold: true, fontSize: 14
 });
 const [hexColorInput, setHexColorInput] = useState('#888888');
-const [copyrightFrequency, setCopyrightFrequency] = useState('always'); 
+const [copyrightFrequency, setCopyrightFrequency] = useState('always');
 const [copyrightEveryX, setCopyrightEveryX] = useState('5');
 
-// 🔥 NEW SEPARATOR SETTINGS 🔥
+// SEPARATOR SETTINGS
 const [enableSeparator, setEnableSeparator] = useState(true);
 const [separatorText, setSeparatorText] = useState('________________________________________');
 
@@ -271,11 +293,10 @@ const [separatorText, setSeparatorText] = useState('____________________________
 const [chaptersList, setChaptersList] = useState([]);
 const [loadingChapters, setLoadingChapters] = useState(false);
 
-const [drawerMode, setDrawerMode] = useState('none'); 
-// تعديل: تغيير القيمة الابتدائية للدرج الأيسر إلى SCREEN_HEIGHT ليظهر من الأسفل
-const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current; 
-const slideAnimRight = useRef(new Animated.Value(DRAWER_WIDTH)).current; 
-const fadeAnim = useRef(new Animated.Value(0)).current; 
+const [drawerMode, setDrawerMode] = useState('none');
+const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+const slideAnimRight = useRef(new Animated.Value(DRAWER_WIDTH)).current;
+const fadeAnim = useRef(new Animated.Value(0)).current;
 const backdropAnim = useRef(new Animated.Value(0)).current;
 
 const [showComments, setShowComments] = useState(false);
@@ -290,7 +311,7 @@ const isAdmin = userInfo?.role === 'admin';
 
 useEffect(() => {
     loadSettings();
-    loadFoldersAndPrefs(); 
+    loadFoldersAndPrefs();
     if (!isOfflineMode) {
         fetchAuthorData();
         if (isAdmin) {
@@ -300,12 +321,10 @@ useEffect(() => {
     }
 }, []);
 
-// Fetch chapters if not provided
 useEffect(() => {
     if (!isOfflineMode && (!novel.chapters || novel.chapters.length === 0) && (!availableChapters || availableChapters.length === 0)) {
         fetchChapters();
     } else {
-        // Build chaptersList from available data
         if (availableChapters && availableChapters.length > 0) {
             const list = availableChapters.map(num => ({
                 number: num,
@@ -364,8 +383,7 @@ const fetchCopyrights = async () => {
         }
         if (res.data.frequency) setCopyrightFrequency(res.data.frequency);
         if (res.data.everyX) setCopyrightEveryX(res.data.everyX.toString());
-        
-        // Load Separator Settings
+
         if (res.data.chapterSeparatorText) setSeparatorText(res.data.chapterSeparatorText);
         if (res.data.enableChapterSeparator !== undefined) setEnableSeparator(res.data.enableChapterSeparator);
     } catch (e) {}
@@ -380,8 +398,8 @@ const handleSaveCopyrights = async () => {
             styles: copyrightStyle,
             frequency: copyrightFrequency,
             everyX: parseInt(copyrightEveryX) || 5,
-            chapterSeparatorText: separatorText, // Save separator text
-            enableChapterSeparator: enableSeparator // Save toggle
+            chapterSeparatorText: separatorText,
+            enableChapterSeparator: enableSeparator
         });
         showToast("تم حفظ الحقوق والإعدادات بنجاح", "success");
         fetchChapter();
@@ -394,19 +412,24 @@ const handleSaveCopyrights = async () => {
 
 const loadSettings = async () => {
     try {
-        const saved = await AsyncStorage.getItem('@reader_settings_v3'); 
+        const saved = await AsyncStorage.getItem('@reader_settings_v4');
         if (saved) {
             const parsed = JSON.parse(saved);
             if (parsed.fontSize) setFontSize(parsed.fontSize);
             if (parsed.bgColor) {
                 setBgColor(parsed.bgColor);
-                setTextColor(parsed.bgColor === '#fff' ? '#1a1a1a' : '#e0e0e0');
+                setBgColorHexInput(parsed.bgColor);
+                setTextColor(parsed.bgColor === '#fff' || parsed.bgColor === '#ffffff' ? '#1a1a1a' : '#e0e0e0');
+            }
+            if (parsed.textColor) {
+                setTextColor(parsed.textColor);
+                setTextColorHexInput(parsed.textColor);
             }
             if (parsed.fontId) {
                 const foundFont = FONT_OPTIONS.find(f => f.id === parsed.fontId);
                 if (foundFont) setFontFamily(foundFont);
             }
-            
+
             if (parsed.enableDialogue !== undefined) setEnableDialogue(parsed.enableDialogue);
             if (parsed.dialogueColor) setDialogueColor(parsed.dialogueColor);
             if (parsed.dialogueSize) setDialogueSize(parsed.dialogueSize);
@@ -419,7 +442,19 @@ const loadSettings = async () => {
             if (parsed.hideMarkdownMarks !== undefined) setHideMarkdownMarks(parsed.hideMarkdownMarks);
             if (parsed.selectedMarkdownStyle) setSelectedMarkdownStyle(parsed.selectedMarkdownStyle);
 
-            // load brightness
+            if (parsed.enableBracket !== undefined) setEnableBracket(parsed.enableBracket);
+            if (parsed.bracketColor) setBracketColor(parsed.bracketColor);
+            if (parsed.bracketSize) setBracketSize(parsed.bracketSize);
+            if (parsed.hideBracketMarks !== undefined) setHideBracketMarks(parsed.hideBracketMarks);
+            if (parsed.selectedBracketStyle) setSelectedBracketStyle(parsed.selectedBracketStyle);
+
+            if (parsed.enableCustom !== undefined) setEnableCustom(parsed.enableCustom);
+            if (parsed.customOpenMark) setCustomOpenMark(parsed.customOpenMark);
+            if (parsed.customCloseMark) setCustomCloseMark(parsed.customCloseMark);
+            if (parsed.customColor) setCustomColor(parsed.customColor);
+            if (parsed.customSize) setCustomSize(parsed.customSize);
+            if (parsed.hideCustomMarks !== undefined) setHideCustomMarks(parsed.hideCustomMarks);
+
             if (parsed.textBrightness) setTextBrightness(parsed.textBrightness);
         }
     } catch (e) { console.error("Error loading settings", e); }
@@ -427,9 +462,9 @@ const loadSettings = async () => {
 
 const saveSettings = async (newSettings) => {
     try {
-        const current = await AsyncStorage.getItem('@reader_settings_v3');
+        const current = await AsyncStorage.getItem('@reader_settings_v4');
         const existing = current ? JSON.parse(current) : {};
-        await AsyncStorage.setItem('@reader_settings_v3', JSON.stringify({ ...existing, ...newSettings }));
+        await AsyncStorage.setItem('@reader_settings_v4', JSON.stringify({ ...existing, ...newSettings }));
     } catch (e) { console.error("Error saving settings", e); }
 };
 
@@ -495,9 +530,9 @@ const handleCreateFolder = () => {
 const deleteFolder = (folderId) => {
     Alert.alert("حذف المجلد", "هل أنت متأكد؟ سيتم حذف جميع الاستبدالات داخله.", [
         { text: "إلغاء" },
-        { 
-            text: "حذف", 
-            style: 'destructive', 
+        {
+            text: "حذف",
+            style: 'destructive',
             onPress: () => {
                 const updated = folders.filter(f => f.id !== folderId);
                 saveFoldersData(updated);
@@ -514,11 +549,18 @@ const openFolder = (folderId) => {
     setCurrentFolderId(folderId);
     setReplacementViewMode('list');
     saveUiPrefs({ lastFolderId: folderId });
-    setReplaceSearch(''); 
+    setReplaceSearch('');
+    setEditingId(null);
+    setNewOriginal('');
+    setNewReplacement('');
 };
 
 const backToFolders = () => {
     setReplacementViewMode('folders');
+    setEditingId(null);
+    setNewOriginal('');
+    setNewReplacement('');
+    setReplaceSearch('');
 };
 
 const toggleSortOrder = () => {
@@ -538,7 +580,7 @@ const handleAddReplacement = () => {
     const currentFolder = folders[folderIndex];
     let updatedReplacements = [...currentFolder.replacements];
     if (editingId !== null) {
-        updatedReplacements = updatedReplacements.map((item, index) => 
+        updatedReplacements = updatedReplacements.map((item, index) =>
             index === editingId ? { original: newOriginal.trim(), replacement: newReplacement.trim() } : item
         );
         setEditingId(null);
@@ -556,7 +598,13 @@ const handleAddReplacement = () => {
 const handleEditReplacement = (item, realIndex) => {
     setNewOriginal(item.original);
     setNewReplacement(item.replacement);
-    setEditingId(realIndex); 
+    setEditingId(realIndex);
+};
+
+const handleCancelEditReplacement = () => {
+    setEditingId(null);
+    setNewOriginal('');
+    setNewReplacement('');
 };
 
 const handleDeleteReplacement = (realIndex) => {
@@ -585,13 +633,13 @@ const filteredSortedReplacements = useMemo(() => {
     let list = activeReplacementsList.map((item, index) => ({ ...item, realIndex: index }));
     if (replaceSearch.trim()) {
         const q = replaceSearch.toLowerCase();
-        list = list.filter(item => 
-            item.original.toLowerCase().includes(q) || 
+        list = list.filter(item =>
+            item.original.toLowerCase().includes(q) ||
             item.replacement.toLowerCase().includes(q)
         );
     }
     if (replaceSortDesc) {
-        list.reverse(); 
+        list.reverse();
     }
     return list;
 }, [activeReplacementsList, replaceSearch, replaceSortDesc]);
@@ -601,48 +649,66 @@ const handleExecuteCleaner = async () => {
         Alert.alert('تنبيه', 'يرجى إدخال النص المراد حذفه');
         return;
     }
-    Alert.alert(
-        "تأكيد الحذف الشامل",
-        `سيتم حذف أي فقرة أو نص مطابق لما أدخلته من جميع الفصول في السيرفر.`,
-        [
-            { text: "إلغاء", style: "cancel" },
-            { 
-                text: "تنفيذ الحذف", 
-                style: "destructive", 
-                onPress: async () => {
-                    setCleaningLoading(true);
-                    try {
-                        if (cleanerEditingId !== null) {
-                            await api.put(`/api/admin/cleaner/${cleanerEditingId}`, { word: newCleanerWord });
-                            setCleanerEditingId(null);
-                        } else {
-                            await api.post('/api/admin/cleaner', { word: newCleanerWord });
-                        }
-                        setNewCleanerWord('');
-                        await fetchCleanerWords();
-                        showToast("تم الحذف من جميع الفصول بنجاح", "success");
-                        fetchChapter();
-                    } catch (e) {
-                        showToast("فشل تنفيذ الحذف", "error");
-                    } finally {
-                        setCleaningLoading(false);
-                    }
-                }
+
+    const executeAction = async () => {
+        setCleaningLoading(true);
+        try {
+            if (cleanerEditingId !== null && cleanerOldWord) {
+                await api.put(`/api/admin/cleaner/${encodeURIComponent(cleanerOldWord)}`, { word: newCleanerWord.trim() });
+                setCleanerEditingId(null);
+                setCleanerOldWord('');
+            } else {
+                await api.post('/api/admin/cleaner', { word: newCleanerWord.trim() });
             }
-        ]
-    );
+            setNewCleanerWord('');
+            await fetchCleanerWords();
+            showToast(cleanerEditingId !== null ? "تم التحديث بنجاح" : "تم الحذف من جميع الفصول بنجاح", "success");
+            fetchChapter();
+        } catch (e) {
+            showToast("فشل تنفيذ العملية", "error");
+        } finally {
+            setCleaningLoading(false);
+        }
+    };
+
+    if (cleanerEditingId !== null) {
+        Alert.alert(
+            "تأكيد التحديث",
+            `سيتم تحديث "${cleanerOldWord}" إلى "${newCleanerWord.trim()}" في جميع الفصول.`,
+            [
+                { text: "إلغاء", style: "cancel" },
+                { text: "تحديث", style: "destructive", onPress: executeAction }
+            ]
+        );
+    } else {
+        Alert.alert(
+            "تأكيد الحذف الشامل",
+            `سيتم حذف أي فقرة أو نص مطابق لـ "${newCleanerWord.trim()}" من جميع الفصول في السيرفر.`,
+            [
+                { text: "إلغاء", style: "cancel" },
+                { text: "تنفيذ الحذف", style: "destructive", onPress: executeAction }
+            ]
+        );
+    }
 };
 
 const handleEditCleaner = (item, index) => {
     setNewCleanerWord(item);
     setCleanerEditingId(index);
+    setCleanerOldWord(item);
+};
+
+const handleCancelEditCleaner = () => {
+    setCleanerEditingId(null);
+    setCleanerOldWord('');
+    setNewCleanerWord('');
 };
 
 const handleDeleteCleaner = async (item) => {
     Alert.alert("حذف", "هل تريد إزالة هذا النص من القائمة؟", [
         { text: "إلغاء" },
-        { 
-            text: "حذف", 
+        {
+            text: "حذف",
             style: 'destructive',
             onPress: async () => {
                 try {
@@ -651,9 +717,10 @@ const handleDeleteCleaner = async (item) => {
                     if (newCleanerWord === item) {
                         setNewCleanerWord('');
                         setCleanerEditingId(null);
+                        setCleanerOldWord('');
                     }
                 } catch (e) { showToast("فشل الحذف", "error"); }
-            } 
+            }
         }
     ]);
 };
@@ -692,12 +759,10 @@ const fetchChapter = async () => {
     try {
         let chapterData = null;
 
-        // 1. Try Offline First (If downloaded)
         const offlineData = await getOfflineChapterContent(novelId, chapterId);
         if (offlineData) {
             chapterData = offlineData;
-        } 
-        // 2. If not found locally and NOT forced offline, try API
+        }
         else if (!isOfflineMode) {
             const response = await api.get(`/api/novels/${novelId}/chapters/${chapterId}`);
             chapterData = response.data;
@@ -706,13 +771,12 @@ const fetchChapter = async () => {
         }
 
         setChapter(chapterData);
-        // 🔥 FIX: If availableChapters provided (offline mode), use that for total count
         if (availableChapters) {
              setRealTotalChapters(availableChapters.length);
         } else if (chapterData.totalChapters) {
             setRealTotalChapters(chapterData.totalChapters);
         }
-        
+
         if (!isOfflineMode) {
             incrementView(novelId, chapterId);
             updateProgressOnServer(chapterData);
@@ -755,7 +819,6 @@ const toggleMenu = useCallback(() => {
   });
 }, [drawerMode]);
 
-// 🔥🔥 FIX FOR WEB CLICK EVENT 🔥🔥
 useEffect(() => {
     if (Platform.OS === 'web') {
         const handleWebMessage = (event) => {
@@ -775,18 +838,21 @@ useEffect(() => {
 const openLeftDrawer = () => {
     setDrawerMode('chapters');
     Animated.parallel([
-        // تعديل: تحريك الدرج الأيسر من الأسفل إلى y=0
         Animated.timing(slideAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
         Animated.timing(backdropAnim, { toValue: 1, duration: 300, useNativeDriver: true })
     ]).start();
 };
 
-const openRightDrawer = (mode) => { 
-    if (isOfflineMode) return; 
+const openRightDrawer = (mode) => {
+    if (isOfflineMode) return;
     setShowSettings(false);
     setDrawerMode(mode);
-    if (mode === 'replacements' && !currentFolderId) {
-        setReplacementViewMode('folders');
+    if (mode === 'replacements') {
+        if (!currentFolderId) {
+            setReplacementViewMode('folders');
+        } else {
+            setReplacementViewMode('list');
+        }
     }
     Animated.parallel([
         Animated.timing(slideAnimRight, { toValue: 0, duration: 300, useNativeDriver: true }),
@@ -797,7 +863,6 @@ const openRightDrawer = (mode) => {
 const closeDrawers = () => {
     Keyboard.dismiss();
     Animated.parallel([
-        // تعديل: إعادة الدرج الأيسر إلى الأسفل (SCREEN_HEIGHT)
         Animated.timing(slideAnim, { toValue: SCREEN_HEIGHT, duration: 300, useNativeDriver: true }),
         Animated.timing(slideAnimRight, { toValue: DRAWER_WIDTH, duration: 300, useNativeDriver: true }),
         Animated.timing(backdropAnim, { toValue: 0, duration: 300, useNativeDriver: true })
@@ -807,61 +872,54 @@ const closeDrawers = () => {
         setNewOriginal('');
         setNewReplacement('');
         setCleanerEditingId(null);
+        setCleanerOldWord('');
         setNewCleanerWord('');
     });
 };
-
-// تعديل: إنشاء قائمة الفصول بناءً على chaptersList
-const sortedChapters = useMemo(() => {
-    let list = [...chaptersList];
-    if (!isAscending) list.reverse();
-    return list;
-}, [chaptersList, isAscending]);
 
 const [isAscending, setIsAscending] = useState(true);
 const toggleSort = () => {
     setIsAscending(!isAscending);
 };
 
+const sortedChapters = useMemo(() => {
+    let list = [...chaptersList];
+    if (!isAscending) list.reverse();
+    return list;
+}, [chaptersList, isAscending]);
+
 const navigateChapter = (targetId) => {
     closeDrawers();
     if (parseInt(targetId) === parseInt(chapterId)) return;
     setTimeout(() => {
-        navigation.replace('Reader', { 
-            novel, 
-            chapterId: targetId, 
+        navigation.replace('Reader', {
+            novel,
+            chapterId: targetId,
             isOfflineMode,
-            availableChapters 
+            availableChapters
         });
     }, 300);
 };
 
-// 🔥🔥 FIX: Navigation using available chapters list 🔥🔥
 const navigateNextPrev = (offset) => {
     if (availableChapters && availableChapters.length > 0) {
-        // Offline / Download Mode Logic
         const currentNum = parseInt(chapterId);
-        // Find index in available list (assuming it is sorted, or we sort it)
         const sortedAvailable = [...availableChapters].sort((a,b) => a - b);
         const currentIndex = sortedAvailable.indexOf(currentNum);
-        
-        if (currentIndex === -1) return; // Should not happen
-
+        if (currentIndex === -1) return;
         const nextIndex = currentIndex + offset;
-        
         if (nextIndex >= 0 && nextIndex < sortedAvailable.length) {
             const nextChapId = sortedAvailable[nextIndex];
-            navigation.replace('Reader', { 
-                novel, 
-                chapterId: nextChapId, 
+            navigation.replace('Reader', {
+                novel,
+                chapterId: nextChapId,
                 isOfflineMode,
-                availableChapters 
+                availableChapters
             });
         } else {
              Alert.alert("تنبيه", offset > 0 ? "أنت في آخر فصل منزل." : "أنت في أول فصل منزل.");
         }
     } else {
-        // Online Logic (Standard)
         const nextNum = parseInt(chapterId) + offset;
         if (offset < 0 && nextNum < 1) return;
         if (offset > 0 && realTotalChapters > 0 && nextNum > realTotalChapters) {
@@ -882,9 +940,30 @@ saveSettings({ fontSize: newSize });
 
 const changeTheme = (newBgColor) => {
 setBgColor(newBgColor);
-const newTextColor = newBgColor === '#fff' ? '#1a1a1a' : '#e0e0e0';
-setTextColor(newTextColor);
+setBgColorHexInput(newBgColor);
 saveSettings({ bgColor: newBgColor });
+};
+
+const handleBgColorHexChange = (text) => {
+    setBgColorHexInput(text);
+    if (/^#[0-9A-F]{6}$/i.test(text)) {
+        setBgColor(text);
+        saveSettings({ bgColor: text });
+    }
+};
+
+const handleTextColorHexChange = (text) => {
+    setTextColorHexInput(text);
+    if (/^#[0-9A-F]{6}$/i.test(text)) {
+        setTextColor(text);
+        saveSettings({ textColor: text });
+    }
+};
+
+const handleTextColorPreset = (color) => {
+    setTextColor(color);
+    setTextColorHexInput(color);
+    saveSettings({ textColor: color });
 };
 
 const handleFontChange = (font) => {
@@ -909,11 +988,11 @@ const copyrightCSS = `
     opacity: ${style.opacity || 1};
     text-align: ${style.alignment || 'center'};
     font-weight: ${style.isBold ? 'bold' : 'normal'};
-    font-size: ${style.fontSize || 14}px; 
+    font-size: ${style.fontSize || 14}px;
     line-height: 1.5;
     padding: 15px 0;
     margin: 10px 0;
-    font-family: sans-serif; 
+    font-family: sans-serif;
 `;
 
 const dividerCSS = `
@@ -926,7 +1005,10 @@ const dividerCSS = `
     }
 `;
 
+const customSeparatorHTML = enableSeparator ? `<div style="text-align:center; color: rgba(128,128,128,0.5); font-size: ${fontSize}px; padding: 10px 0; margin: 5px 0 20px 0; letter-spacing: 2px; user-select: none;">${separatorText}</div>` : '';
 const dividerHTML = `<div class="chapter-divider"></div>`;
+
+const titleHTML = `<div class="title">${chapter.title}</div>`;
 
 const startHTML = startCopy ? `
     <!-- START: COPYRIGHTS -->
@@ -950,6 +1032,23 @@ const formattedContent = getProcessedContent
     .map(line => {
         let processedLine = line;
 
+        // Bracket formatting [ ]
+        if (enableBracket) {
+            const bracketClass = hideBracketMarks ? 'bracket-mark-hidden' : 'bracket-mark-visible';
+            let openB = '', closeB = '';
+            if (selectedBracketStyle === 'guillemets') { openB = '«'; closeB = '»'; }
+            else if (selectedBracketStyle === 'curly') { openB = '“'; closeB = '”'; }
+            else if (selectedBracketStyle === 'straight') { openB = '"'; closeB = '"'; }
+            else if (selectedBracketStyle === 'single') { openB = '‘'; closeB = '’'; }
+
+            processedLine = processedLine.replace(/\[(.*?)\]/g, (match, content) => {
+                const innerStart = openB ? `<span class="bracket-quote-style">${openB}</span>` : '';
+                const innerEnd = closeB ? `<span class="bracket-quote-style">${closeB}</span>` : '';
+                return `<span class="bracket-formatted"><span class="${bracketClass}">[</span>${innerStart}${content}${innerEnd}<span class="${bracketClass}">]</span></span>`;
+            });
+        }
+
+        // Markdown
         if (enableMarkdown) {
             const markClass = hideMarkdownMarks ? 'mark-hidden' : 'mark-visible';
             let openQuote = '', closeQuote = '';
@@ -961,18 +1060,18 @@ const formattedContent = getProcessedContent
             processedLine = processedLine.replace(/\*\*(.*?)\*\*/g, (match, content) => {
                 const quoteStart = openQuote ? `<span class="cm-quote-style">${openQuote}</span>` : '';
                 const quoteEnd = closeQuote ? `<span class="cm-quote-style">${closeQuote}</span>` : '';
-
                 return `<span class="cm-markdown-bold"><span class="${markClass}">**</span>${quoteStart}${content}${quoteEnd}<span class="${markClass}">**</span></span>`;
             });
         }
 
+        // Dialogue
         if (enableDialogue) {
             const quoteClass = hideQuotes ? 'quote-mark hidden' : 'quote-mark';
             let quoteRegex;
             if (selectedQuoteStyle === 'guillemets') {
                 quoteRegex = /(«)([\s\S]*?)(»)/g;
             } else if (selectedQuoteStyle === 'curly') {
-                quoteRegex = /([“])([\s\S]*?)([”])/g; 
+                quoteRegex = /([“])([\s\S]*?)([”])/g;
             } else if (selectedQuoteStyle === 'straight') {
                 quoteRegex = /(")([\s\S]*?)(")/g;
             } else if (selectedQuoteStyle === 'single') {
@@ -983,6 +1082,17 @@ const formattedContent = getProcessedContent
 
             processedLine = processedLine.replace(quoteRegex, (match, open, content, close) => {
                 return `<span class="cm-dialogue-text"><span class="${quoteClass}">${open}</span>${content}<span class="${quoteClass}">${close}</span></span>`;
+            });
+        }
+
+        // Custom formatting
+        if (enableCustom && customOpenMark.trim() && customCloseMark.trim()) {
+            const customClass = hideCustomMarks ? 'custom-mark-hidden' : 'custom-mark-visible';
+            const escapedOpen = customOpenMark.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const escapedClose = customCloseMark.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const customRegex = new RegExp(`${escapedOpen}(.*?)${escapedClose}`, 'g');
+            processedLine = processedLine.replace(customRegex, (match, content) => {
+                return `<span class="custom-formatted"><span class="${customClass}">${customOpenMark}</span>${content}<span class="${customClass}">${customCloseMark}</span></span>`;
             });
         }
 
@@ -1024,7 +1134,6 @@ const commentsButton = !isOfflineMode ? `
 
 const obfuscatedFinalContent = obfuscate(formattedContent);
 
-// Apply brightness filter
 const brightnessStyle = `filter: brightness(${textBrightness});`;
 
 return `
@@ -1036,36 +1145,36 @@ return `
     <style>
       ${fontImports}
       * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; box-sizing: border-box; }
-      body, html { 
+      body, html {
         margin: 0; padding: 0; background-color: ${bgColor}; color: ${textColor};
-        font-family: ${fontFamily.family}; line-height: 1.8; 
-        -webkit-overflow-scrolling: touch; 
+        font-family: ${fontFamily.family}; line-height: 1.8;
+        -webkit-overflow-scrolling: touch;
         overflow-x: hidden;
         ${brightnessStyle}
       }
       .container { padding: 25px 20px 120px 20px; width: 100%; max-width: 800px; margin: 0 auto; }
-      
-      .title { 
-        font-size: ${fontSize + 8}px; font-weight: bold; margin-bottom: 20px; 
-        color: ${bgColor === '#fff' ? '#000' : '#fff'}; 
+
+      .title {
+        font-size: ${fontSize + 8}px; font-weight: bold; margin-bottom: 20px;
+        color: ${bgColor === '#fff' || bgColor === '#ffffff' ? '#000' : '#fff'};
         padding-bottom: 10px; font-family: ${fontFamily.family};
-        text-align: right; 
+        text-align: right;
       }
 
       ${dividerCSS}
 
       .content-area { font-size: ${fontSize}px; text-align: justify; word-wrap: break-word; }
       p { margin-bottom: 1.5em; }
-      
-      .cm-dialogue-text { 
-          color: ${enableDialogue ? dialogueColor : 'inherit'}; 
+
+      .cm-dialogue-text {
+          color: ${enableDialogue ? dialogueColor : 'inherit'};
           font-size: ${dialogueSize}%;
           font-weight: bold;
           transition: color 0.3s ease, font-size 0.3s ease;
       }
-      .cm-markdown-bold { 
+      .cm-markdown-bold {
           font-weight: bold;
-          color: ${enableMarkdown ? markdownColor : 'inherit'}; 
+          color: ${enableMarkdown ? markdownColor : 'inherit'};
           font-size: ${markdownSize}%;
           transition: color 0.3s ease, font-size 0.3s ease;
       }
@@ -1075,9 +1184,28 @@ return `
       .mark-visible { opacity: 1; }
       .mark-hidden { opacity: 0; font-size: 0; }
 
+      .bracket-formatted {
+          color: ${enableBracket ? bracketColor : 'inherit'};
+          font-size: ${bracketSize}%;
+          font-weight: bold;
+          transition: color 0.3s ease, font-size 0.3s ease;
+      }
+      .bracket-quote-style { opacity: 1; }
+      .bracket-mark-visible { opacity: 1; }
+      .bracket-mark-hidden { opacity: 0; font-size: 0; }
+
+      .custom-formatted {
+          color: ${enableCustom ? customColor : 'inherit'};
+          font-size: ${customSize}%;
+          font-weight: bold;
+          transition: color 0.3s ease, font-size 0.3s ease;
+      }
+      .custom-mark-visible { opacity: 1; }
+      .custom-mark-hidden { opacity: 0; font-size: 0; }
+
       body { user-select: none; -webkit-user-select: none; }
       .author-section-wrapper { margin-top: 50px; margin-bottom: 20px; border-top: 1px solid #222; padding-top: 20px; }
-      .section-title { color: ${bgColor === '#fff' ? '#000' : '#fff'}; font-size: 18px; font-weight: bold; margin-bottom: 12px; text-align: right; }
+      .section-title { color: ${bgColor === '#fff' || bgColor === '#ffffff' ? '#000' : '#fff'}; font-size: 18px; font-weight: bold; margin-bottom: 12px; text-align: right; }
       .author-card { border-radius: 16px; overflow: hidden; margin-top: 10px; border: 1px solid #222; position: relative; height: 140px; width: 100%; cursor: pointer; }
       .author-banner { position: absolute; width: 100%; height: 100%; background-size: cover; background-position: center; }
       .author-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.8)); z-index: 1; }
@@ -1086,20 +1214,20 @@ return `
       .author-avatar-img { width: 100%; height: 100%; object-fit: cover; }
       .author-name { color: #fff; font-size: 20px; font-weight: bold; text-transform: uppercase; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9); text-align: center; }
       .comments-btn-container { margin-bottom: 40px; padding: 0 5px; }
-      .comments-btn { width: 100%; background-color: ${bgColor === '#fff' ? '#f0f0f0' : '#1a1a1a'}; border: 1px solid ${bgColor === '#fff' ? '#ddd' : '#333'}; color: ${bgColor === '#fff' ? '#333' : '#fff'}; padding: 15px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+      .comments-btn { width: 100%; background-color: ${bgColor === '#fff' || bgColor === '#ffffff' ? '#f0f0f0' : '#1a1a1a'}; border: 1px solid ${bgColor === '#fff' || bgColor === '#ffffff' ? '#ddd' : '#333'}; color: ${bgColor === '#fff' || bgColor === '#ffffff' ? '#333' : '#fff'}; padding: 15px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
     </style>
   </head>
   <body>
     <div class="container" id="clickable-area">
-      <div class="title">${chapter.title}</div>
-      ${dividerHTML}
-      
+      ${titleHTML}
+      ${customSeparatorHTML}
+
       ${startHTML}
-      
+
       <div class="content-area" id="main-content-area">
         <div style="text-align: center; padding: 20px; opacity: 0.5;">جاري التحميل الآمن...</div>
       </div>
-      
+
       ${endHTML}
 
       ${publisherBanner}
@@ -1109,7 +1237,7 @@ return `
       (function() {
           const _S = "${ZEUS_SECRET}";
           const _D = "${obfuscatedFinalContent}";
-          
+
           function decrypt(encoded) {
             try {
               const text = atob(encoded);
@@ -1124,7 +1252,7 @@ return `
           document.getElementById('main-content-area').innerHTML = decrypt(_D);
 
           function sendMessage(msg) {
-              if (window.ReactNativeWebView) { window.ReactNativeWebView.postMessage(msg); } 
+              if (window.ReactNativeWebView) { window.ReactNativeWebView.postMessage(msg); }
               else if (window.parent) { window.parent.postMessage(msg, '*'); }
           }
           document.addEventListener('click', function(e) {
@@ -1173,41 +1301,50 @@ const renderFolderItem = ({ item }) => (
     </TouchableOpacity>
 );
 
-const renderReplacementItem = ({ item, index }) => (
-    <TouchableOpacity style={styles.replacementItem} onPress={() => handleEditReplacement(item, index)}>
-        <View style={styles.replacementInfo}>
-            <Text style={[styles.replacementText, {color: '#888', fontSize: 12, marginBottom: 2}]}>{item.original}</Text>
-            <Ionicons name="arrow-down" size={12} color="#4a7cc7" style={{marginVertical: 2}} />
-            <Text style={[styles.replacementText, {fontWeight: 'bold', color: '#fff'}]}>{item.replacement}</Text>
-        </View>
-        <View style={styles.replacementActions}>
-            <TouchableOpacity onPress={() => handleDeleteReplacement(index)} style={styles.actionBtn}>
-                <Ionicons name="trash-outline" size={18} color="#ff4444" />
-            </TouchableOpacity>
-        </View>
-    </TouchableOpacity>
-);
+const renderReplacementItem = ({ item, index }) => {
+    const isEditing = editingId === index;
+    return (
+        <TouchableOpacity
+            style={[styles.replacementItem, isEditing && styles.replacementItemEditing]}
+            onPress={() => handleEditReplacement(item, index)}
+        >
+            <View style={styles.replacementInfo}>
+                <Text style={[styles.replacementText, {color: '#888', fontSize: 12, marginBottom: 2}]}>{item.original}</Text>
+                <Ionicons name="arrow-down" size={12} color="#4a7cc7" style={{marginVertical: 2}} />
+                <Text style={[styles.replacementText, {fontWeight: 'bold', color: '#fff'}]}>{item.replacement}</Text>
+            </View>
+            <View style={styles.replacementActions}>
+                <TouchableOpacity onPress={() => handleDeleteReplacement(index)} style={styles.actionBtn}>
+                    <Ionicons name="trash-outline" size={18} color="#ff4444" />
+                </TouchableOpacity>
+            </View>
+        </TouchableOpacity>
+    );
+};
 
-const renderCleanerItem = ({ item, index }) => (
-    <View style={styles.replacementItem}>
-        <View style={styles.replacementInfo}>
-            <Text style={[styles.replacementText, {color: '#ccc', textAlign: 'right'}]} numberOfLines={2}>{item}</Text>
+const renderCleanerItem = ({ item, index }) => {
+    const isEditing = cleanerEditingId === index;
+    return (
+        <View style={[styles.replacementItem, isEditing && styles.replacementItemEditing]}>
+            <View style={styles.replacementInfo}>
+                <Text style={[styles.replacementText, {color: '#ccc', textAlign: 'right'}]} numberOfLines={2}>{item}</Text>
+            </View>
+            <View style={styles.replacementActions}>
+                <TouchableOpacity onPress={() => handleEditCleaner(item, index)} style={styles.actionBtn}>
+                    <Ionicons name="create-outline" size={18} color="#4a7cc7" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleDeleteCleaner(item)} style={styles.actionBtn}>
+                    <Ionicons name="trash-outline" size={18} color="#ff4444" />
+                </TouchableOpacity>
+            </View>
         </View>
-        <View style={styles.replacementActions}>
-            <TouchableOpacity onPress={() => handleEditCleaner(item, index)} style={styles.actionBtn}>
-                <Ionicons name="create-outline" size={18} color="#4a7cc7" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleDeleteCleaner(item)} style={styles.actionBtn}>
-                <Ionicons name="trash-outline" size={18} color="#ff4444" />
-            </TouchableOpacity>
-        </View>
-    </View>
-);
+    );
+};
 
 const renderChapterItem = ({ item }) => {
     return (
-        <TouchableOpacity 
-            style={[styles.drawerItem, item.number == chapterId && styles.drawerItemActive]} 
+        <TouchableOpacity
+            style={[styles.drawerItem, item.number == chapterId && styles.drawerItemActive]}
             onPress={() => navigateChapter(item.number)}
         >
             <Text style={[styles.drawerItemTitle, item.number == chapterId && styles.drawerItemTextActive]}>
@@ -1227,11 +1364,8 @@ return (
 );
 }
 
-// Helper to determine subtitle text (Online vs Offline)
 const getHeaderSubtitle = () => {
     if (availableChapters) {
-        // Offline / Downloaded context
-        // Find position of current chapter in the downloaded list
         const sorted = [...availableChapters].sort((a,b) => a - b);
         const index = sorted.indexOf(parseInt(chapterId));
         return `الفصل ${index + 1} من ${sorted.length}`;
@@ -1292,7 +1426,7 @@ const renderAndroidContent = () => (
 
 return (
 <View style={[styles.container, { backgroundColor: bgColor }]}>
-  <StatusBar hidden={!showMenu} barStyle={bgColor === '#fff' ? 'dark-content' : 'light-content'} animated />
+  <StatusBar hidden={!showMenu} barStyle={bgColor === '#fff' || bgColor === '#ffffff' ? 'dark-content' : 'light-content'} animated />
 
   {/* Top Bar */}
   <Animated.View style={[styles.topBar, { opacity: fadeAnim, paddingTop: insets.top + 10, transform: [{ translateY: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [-100, 0] }) }] }]} pointerEvents={showMenu ? 'auto' : 'none'}>
@@ -1305,16 +1439,16 @@ return (
     </View>
   </Animated.View>
 
-  {/* المنصات */}
+  {/* Platforms */}
   {Platform.OS === 'web' ? (
       <iframe srcDoc={generateHTML()} style={{ flex: 1, border: 'none', backgroundColor: bgColor, width: '100%', height: '100%' }} />
   ) : Platform.OS === 'ios' ? (
-      <WebView 
-        ref={webViewRef} 
-        originWhitelist={['*']} 
-        source={{ html: generateHTML() }} 
-        style={{ backgroundColor: bgColor, flex: 1 }} 
-        onMessage={onMessage} 
+      <WebView
+        ref={webViewRef}
+        originWhitelist={['*']}
+        source={{ html: generateHTML() }}
+        style={{ backgroundColor: bgColor, flex: 1 }}
+        onMessage={onMessage}
         scrollEnabled={true}
         bounces={true}
         decelerationRate="normal"
@@ -1328,34 +1462,28 @@ return (
   {/* Bottom Bar */}
   <Animated.View style={[styles.bottomBar, { opacity: fadeAnim, paddingBottom: Math.max(insets.bottom, 20), transform: [{ translateY: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [100, 0] }) }] }]} pointerEvents={showMenu ? 'auto' : 'none'}>
     <View style={styles.bottomBarContent}>
-      
-      {/* Row 1: Icons */}
+
       <View style={styles.topIconsRow}>
-          {/* Menu - Top Left */}
           <TouchableOpacity onPress={openLeftDrawer} style={styles.circleIconBtn}>
               <Ionicons name="list" size={24} color="#fff" />
           </TouchableOpacity>
 
-          {/* Settings - Top Right */}
           <TouchableOpacity onPress={() => { setSettingsView('main'); setShowSettings(true); }} style={styles.circleIconBtn}>
               <Ionicons name="settings-outline" size={24} color="#fff" />
           </TouchableOpacity>
       </View>
 
-      {/* Row 2: Navigation Buttons */}
       <View style={styles.navigationGroup}>
-        {/* Previous */}
-        <TouchableOpacity 
-            style={[styles.navButton, styles.prevButton]} 
+        <TouchableOpacity
+            style={[styles.navButton, styles.prevButton]}
             onPress={() => navigateNextPrev(-1)}
         >
           <Ionicons name="chevron-forward" size={20} color="#fff" />
           <Text style={styles.prevText}>السابق</Text>
         </TouchableOpacity>
 
-        {/* Next */}
-        <TouchableOpacity 
-            style={[styles.navButton, styles.nextButton]} 
+        <TouchableOpacity
+            style={[styles.navButton, styles.nextButton]}
             onPress={() => navigateNextPrev(1)}
         >
           <Text style={styles.nextText}>التالي</Text>
@@ -1370,18 +1498,18 @@ return (
   {drawerMode !== 'none' && (
       <View style={[StyleSheet.absoluteFill, { zIndex: 1000 }]}>
           <TouchableWithoutFeedback onPress={closeDrawers}><Animated.View style={[styles.drawerBackdrop, { opacity: backdropAnim }]} /></TouchableWithoutFeedback>
-          
-          {/* Left Drawer (Chapters) - تعديل: يظهر من الأسفل ويصل إلى منتصف الشاشة */}
-          <Animated.View style={[styles.drawerContent, { 
-              left: 0, 
-              right: 0, 
-              bottom: 0, 
-              height: BOTTOM_DRAWER_HEIGHT, 
-              borderTopWidth: 1, 
-              borderTopColor: '#333', 
-              paddingTop: 20, 
-              paddingBottom: insets.bottom + 20, 
-              transform: [{ translateY: slideAnim }] 
+
+          {/* Left Drawer (Chapters) */}
+          <Animated.View style={[styles.drawerContent, {
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: BOTTOM_DRAWER_HEIGHT,
+              borderTopWidth: 1,
+              borderTopColor: '#333',
+              paddingTop: 20,
+              paddingBottom: insets.bottom + 20,
+              transform: [{ translateY: slideAnim }]
           }]}>
               <View style={styles.drawerHeader}>
                   <TouchableOpacity onPress={closeDrawers}><Ionicons name="close" size={24} color="#888" /></TouchableOpacity>
@@ -1397,11 +1525,11 @@ return (
 
           {/* Right Drawer (Replacements OR Cleaner OR Copyright) */}
           {!isOfflineMode && (
-          <Animated.View style={[styles.drawerContent, { right: 0, borderLeftWidth: 1, borderLeftColor: '#333', paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20, transform: [{ translateX: slideAnimRight }] }]}>
+          <Animated.View style={[styles.drawerContent, { right: 0, left: width * 0.15, borderLeftWidth: 1, borderLeftColor: '#333', paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20, transform: [{ translateX: slideAnimRight }] }]}>
               {drawerMode === 'replacements' && (
-                  <>
+                  <View style={{flex: 1}}>
                       {replacementViewMode === 'folders' && (
-                          <>
+                          <View style={{flex: 1}}>
                               <View style={styles.drawerHeader}>
                                   <Text style={styles.drawerTitle}>مجلدات الاستبدال</Text>
                                   <TouchableOpacity onPress={closeDrawers}><Ionicons name="close" size={24} color="#888" /></TouchableOpacity>
@@ -1413,10 +1541,10 @@ return (
                                   </TouchableOpacity>
                               </View>
                               <FlatList data={folders} keyExtractor={(item) => item.id} renderItem={renderFolderItem} contentContainerStyle={styles.drawerList} />
-                          </>
+                          </View>
                       )}
                       {replacementViewMode === 'list' && (
-                          <>
+                          <View style={{flex: 1}}>
                               <View style={styles.drawerHeader}>
                                   <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
                                       <TouchableOpacity onPress={backToFolders}><Ionicons name="arrow-back" size={24} color="#fff" /></TouchableOpacity>
@@ -1427,51 +1555,81 @@ return (
                                       <TouchableOpacity onPress={closeDrawers}><Ionicons name="close" size={24} color="#888" /></TouchableOpacity>
                                   </View>
                               </View>
+                              {/* Search Bar */}
+                              <View style={{paddingHorizontal: 15, paddingBottom: 10}}>
+                                  <View style={styles.searchBar}>
+                                      <Ionicons name="search" size={16} color="#666" />
+                                      <TextInput
+                                          style={styles.searchInput}
+                                          placeholder="بحث..."
+                                          placeholderTextColor="#666"
+                                          value={replaceSearch}
+                                          onChangeText={setReplaceSearch}
+                                      />
+                                      {replaceSearch.length > 0 && (
+                                          <TouchableOpacity onPress={() => setReplaceSearch('')}>
+                                              <Ionicons name="close-circle" size={16} color="#666" />
+                                          </TouchableOpacity>
+                                      )}
+                                  </View>
+                              </View>
                               <View style={styles.inputContainer}>
                                  <View style={styles.inputRow}>
                                     <TextInput style={styles.textInput} placeholder="الكلمة الأصلية" placeholderTextColor="#666" value={newOriginal} onChangeText={setNewOriginal}/>
                                     <Ionicons name="arrow-down" size={20} color="#444" />
                                     <TextInput style={styles.textInput} placeholder="الكلمة البديلة" placeholderTextColor="#666" value={newReplacement} onChangeText={setNewReplacement}/>
                                  </View>
-                                 <TouchableOpacity style={styles.addButton} onPress={handleAddReplacement}>
-                                     <Text style={styles.addButtonText}>{editingId !== null ? "تحديث" : "إضافة"}</Text>
-                                     <Ionicons name={editingId !== null ? "save-outline" : "add-circle-outline"} size={20} color="#fff" />
-                                 </TouchableOpacity>
+                                 <View style={{flexDirection: 'row', gap: 8}}>
+                                     <TouchableOpacity style={[styles.addButton, {flex: 1}]} onPress={handleAddReplacement}>
+                                         <Text style={styles.addButtonText}>{editingId !== null ? "تحديث" : "إضافة"}</Text>
+                                         <Ionicons name={editingId !== null ? "save-outline" : "add-circle-outline"} size={20} color="#fff" />
+                                     </TouchableOpacity>
+                                     {editingId !== null && (
+                                         <TouchableOpacity style={[styles.addButton, {backgroundColor: '#555', flex: 0}]} onPress={handleCancelEditReplacement}>
+                                             <Ionicons name="close-outline" size={20} color="#fff" />
+                                         </TouchableOpacity>
+                                     )}
+                                 </View>
                               </View>
-                              <FlatList data={filteredSortedReplacements} keyExtractor={(item) => item.realIndex.toString()} renderItem={({ item }) => renderReplacementItem({ item, index: item.realIndex })} contentContainerStyle={styles.drawerList} />
-                          </>
+                              <FlatList data={filteredSortedReplacements} keyExtractor={(item, idx) => idx.toString()} renderItem={renderReplacementItem} contentContainerStyle={styles.drawerList} />
+                          </View>
                       )}
-                  </>
+                  </View>
               )}
               {drawerMode === 'cleaner' && (
-                  <>
+                  <View style={{flex: 1}}>
                       <View style={styles.drawerHeader}>
                           <Text style={[styles.drawerTitle, {color: '#ff4444'}]}>الحذف الشامل</Text>
                           <TouchableOpacity onPress={closeDrawers}><Ionicons name="close" size={24} color="#888" /></TouchableOpacity>
                       </View>
                       <View style={styles.inputContainer}>
                          <TextInput style={[styles.textInput, {height: 120, textAlignVertical: 'top'}]} placeholder="النص..." placeholderTextColor="#666" value={newCleanerWord} onChangeText={setNewCleanerWord} multiline/>
-                         <TouchableOpacity style={[styles.addButton, {backgroundColor: '#b91c1c', marginTop: 10}]} onPress={handleExecuteCleaner} disabled={cleaningLoading}>
-                             {cleaningLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.addButtonText}>تنفيذ الحذف</Text>}
-                         </TouchableOpacity>
+                         <View style={{flexDirection: 'row', gap: 8, marginTop: 10}}>
+                             <TouchableOpacity style={[styles.addButton, {backgroundColor: '#b91c1c', flex: 1}]} onPress={handleExecuteCleaner} disabled={cleaningLoading}>
+                                 {cleaningLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.addButtonText}>{cleanerEditingId !== null ? 'تحديث' : 'تنفيذ الحذف'}</Text>}
+                             </TouchableOpacity>
+                             {cleanerEditingId !== null && (
+                                 <TouchableOpacity style={[styles.addButton, {backgroundColor: '#555', flex: 0}]} onPress={handleCancelEditCleaner}>
+                                     <Ionicons name="close-outline" size={20} color="#fff" />
+                                 </TouchableOpacity>
+                             )}
+                         </View>
                       </View>
                       <FlatList data={cleanerWords} keyExtractor={(_, index) => index.toString()} renderItem={renderCleanerItem} contentContainerStyle={styles.drawerList} />
-                  </>
+                  </View>
               )}
               {drawerMode === 'copyright' && (
-                  <>
+                  <View style={{flex: 1}}>
                       <View style={styles.drawerHeader}>
                           <Text style={[styles.drawerTitle, {color: '#4a7cc7'}]}>حقوق التطبيق</Text>
                           <TouchableOpacity onPress={closeDrawers}><Ionicons name="close" size={24} color="#888" /></TouchableOpacity>
                       </View>
-                      {/* 🔥 FIXED: Use ScrollView inside the drawer content for settings 🔥 */}
-                      <ScrollView contentContainerStyle={{padding: 15, paddingBottom: 100}}>
-                          {/* Frequency Controls */}
+                      <ScrollView contentContainerStyle={{padding: 15, paddingBottom: 100}} style={{flex: 1}}>
                           <View style={{marginBottom: 20}}>
                               <Text style={styles.cardSectionTitle}>تكرار الظهور</Text>
                               <View style={{flexDirection:'row-reverse', flexWrap:'wrap', gap: 10, marginBottom:10}}>
                                   {['always', 'random', 'every_x'].map(freq => (
-                                      <TouchableOpacity 
+                                      <TouchableOpacity
                                           key={freq}
                                           style={[styles.freqBtn, copyrightFrequency === freq && styles.freqBtnActive]}
                                           onPress={() => setCopyrightFrequency(freq)}
@@ -1485,7 +1643,7 @@ return (
                               {copyrightFrequency === 'every_x' && (
                                   <View style={{flexDirection:'row-reverse', alignItems:'center', gap:10}}>
                                       <Text style={{color:'#ccc'}}>كل</Text>
-                                      <TextInput 
+                                      <TextInput
                                           style={[styles.textInput, {width: 60, textAlign:'center'}]}
                                           value={copyrightEveryX}
                                           onChangeText={setCopyrightEveryX}
@@ -1496,14 +1654,13 @@ return (
                               )}
                           </View>
 
-                          {/* Styling Controls */}
                           <View style={{marginBottom: 20}}>
                               <Text style={styles.cardSectionTitle}>اللون (Hex)</Text>
                               <View style={{flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10}}>
                                 <View style={{width: 30, height: 30, backgroundColor: copyrightStyle.color, borderRadius: 15, borderWidth: 1, borderColor: '#fff'}} />
-                                <TextInput 
-                                    style={[styles.textInput, {flex: 1, textAlign: 'left'}]} 
-                                    placeholder="#RRGGBB" 
+                                <TextInput
+                                    style={[styles.textInput, {flex: 1, textAlign: 'left'}]}
+                                    placeholder="#RRGGBB"
                                     value={hexColorInput}
                                     onChangeText={(text) => {
                                         setHexColorInput(text);
@@ -1513,12 +1670,12 @@ return (
                                     }}
                                 />
                               </View>
-                              
+
                               <Text style={styles.cardSectionTitle}>اختر لوناً</Text>
                               <View style={styles.colorPalette}>
                                   {ADVANCED_COLORS.map((c) => (
-                                      <TouchableOpacity 
-                                          key={c.color} 
+                                      <TouchableOpacity
+                                          key={c.color}
                                           style={[styles.paletteCircle, {backgroundColor: c.color}, copyrightStyle.color === c.color && styles.paletteCircleActive]}
                                           onPress={() => {
                                                setCopyrightStyle(prev => ({...prev, color: c.color}));
@@ -1528,7 +1685,6 @@ return (
                                   ))}
                               </View>
 
-                              {/* 🔥 Font Size Slider 🔥 */}
                               <View style={styles.sliderRow}>
                                   <Text style={styles.sliderLabel}>{copyrightStyle.fontSize}px</Text>
                                   <CustomSlider
@@ -1558,12 +1714,12 @@ return (
                               <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15}}>
                                   <View style={{flexDirection: 'row', gap: 10}}>
                                       {['left', 'center', 'right'].map(align => (
-                                          <TouchableOpacity 
-                                            key={align} 
+                                          <TouchableOpacity
+                                            key={align}
                                             style={[styles.alignBtn, copyrightStyle.alignment === align && styles.alignBtnActive]}
                                             onPress={() => setCopyrightStyle(prev => ({...prev, alignment: align}))}
                                           >
-                                              <Ionicons name={`options-outline`} size={16} color={copyrightStyle.alignment === align ? '#fff' : '#666'} /> 
+                                              <Ionicons name={`options-outline`} size={16} color={copyrightStyle.alignment === align ? '#fff' : '#666'} />
                                           </TouchableOpacity>
                                       ))}
                                   </View>
@@ -1571,8 +1727,8 @@ return (
                               </View>
 
                               <View style={styles.toggleRow}>
-                                  <Switch 
-                                      value={copyrightStyle.isBold} 
+                                  <Switch
+                                      value={copyrightStyle.isBold}
                                       onValueChange={(val) => setCopyrightStyle(prev => ({...prev, isBold: val}))}
                                       trackColor={{ false: "#333", true: "#4a7cc7" }}
                                       thumbColor={"#fff"}
@@ -1582,20 +1738,19 @@ return (
                           </View>
 
                           <Text style={styles.listLabel}>سيظهر هذا النص في بداية كل فصل</Text>
-                          <TextInput 
-                              style={[styles.textInput, {height: 100, textAlignVertical: 'top', marginBottom: 20}]} 
-                              placeholder="مثال: حقوق النشر محفوظة لتطبيق زيوس..." 
-                              placeholderTextColor="#666" 
-                              value={copyrightStartText} 
-                              onChangeText={setCopyrightStartText} 
+                          <TextInput
+                              style={[styles.textInput, {height: 100, textAlignVertical: 'top', marginBottom: 20}]}
+                              placeholder="مثال: حقوق النشر محفوظة لتطبيق زيوس..."
+                              placeholderTextColor="#666"
+                              value={copyrightStartText}
+                              onChangeText={setCopyrightStartText}
                               multiline
                           />
-                          
-                          {/* 🔥 NEW: Chapter Separator Control */}
+
                           <View style={{marginBottom: 20, borderTopWidth: 1, borderTopColor: '#333', paddingTop: 20}}>
                               <View style={styles.toggleRow}>
-                                  <Switch 
-                                      value={enableSeparator} 
+                                  <Switch
+                                      value={enableSeparator}
                                       onValueChange={setEnableSeparator}
                                       trackColor={{ false: "#333", true: "#4a7cc7" }}
                                       thumbColor={"#fff"}
@@ -1603,26 +1758,26 @@ return (
                                   <Text style={[styles.toggleLabel, {fontWeight: 'bold'}]}>تفعيل الخط الفاصل تحت العنوان</Text>
                               </View>
                               <Text style={{color: '#888', fontSize: 10, textAlign: 'right', marginBottom: 10}}>
-                                  سيتم وضعه فقط تحت أول سطر إذا كان يحتوي على كلمة "الفصل" أو "Chapter".
+                                  سيتم وضع النص المخصص تحت عنوان الفصل مباشرة.
                               </Text>
-                              
+
                               <Text style={styles.listLabel}>نص الخط الفاصل</Text>
-                              <TextInput 
-                                  style={[styles.textInput, {textAlign: 'center', letterSpacing: 2}]} 
-                                  placeholder="__________________" 
-                                  placeholderTextColor="#666" 
-                                  value={separatorText} 
-                                  onChangeText={setSeparatorText} 
+                              <TextInput
+                                  style={[styles.textInput, {textAlign: 'center', letterSpacing: 2}]}
+                                  placeholder="__________________"
+                                  placeholderTextColor="#666"
+                                  value={separatorText}
+                                  onChangeText={setSeparatorText}
                               />
                           </View>
 
                           <Text style={styles.listLabel}>سيظهر هذا النص في نهاية كل فصل</Text>
-                          <TextInput 
-                              style={[styles.textInput, {height: 100, textAlignVertical: 'top', marginBottom: 20}]} 
-                              placeholder="مثال: شكراً للقراءة على تطبيق زيوس..." 
-                              placeholderTextColor="#666" 
-                              value={copyrightEndText} 
-                              onChangeText={setCopyrightEndText} 
+                          <TextInput
+                              style={[styles.textInput, {height: 100, textAlignVertical: 'top', marginBottom: 20}]}
+                              placeholder="مثال: شكراً للقراءة على تطبيق زيوس..."
+                              placeholderTextColor="#666"
+                              value={copyrightEndText}
+                              onChangeText={setCopyrightEndText}
                               multiline
                           />
 
@@ -1633,7 +1788,7 @@ return (
                               ملاحظة: هذا التغيير سيطبق فوراً على جميع فصول التطبيق.
                           </Text>
                       </ScrollView>
-                  </>
+                  </View>
               )}
           </Animated.View>
           )}
@@ -1668,16 +1823,15 @@ return (
       </View>
   </Modal>
 
-  {/* Unified Settings Modal (Fixed Scrolling) */}
+  {/* Unified Settings Modal */}
   <Modal visible={showSettings} transparent animationType="slide" onRequestClose={() => setShowSettings(false)}>
     <View style={styles.modalOverlay}>
         <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={() => setShowSettings(false)} />
-        
+
         <View style={styles.settingsSheet}>
             <View style={styles.settingsHandle} />
-            
+
             {settingsView === 'main' ? (
-                // 🔥 Main Settings Menu (Hub) - NOW SCROLLABLE 🔥
                 <ScrollView contentContainerStyle={styles.scrollSettingsContainer}>
                     <View style={styles.settingsHeader}>
                         <Text style={styles.settingsTitle}>الإعدادات</Text>
@@ -1741,9 +1895,9 @@ return (
                         <Text style={styles.cardSectionTitle}>نوع الخط</Text>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.fontList}>
                             {FONT_OPTIONS.map((font) => (
-                                <TouchableOpacity 
-                                    key={font.id} 
-                                    onPress={() => handleFontChange(font)} 
+                                <TouchableOpacity
+                                    key={font.id}
+                                    onPress={() => handleFontChange(font)}
                                     style={[styles.fontPill, fontFamily.id === font.id && styles.fontPillActive]}
                                 >
                                     <Text style={[styles.fontPillText, fontFamily.id === font.id && styles.fontPillTextActive]}>{font.name}</Text>
@@ -1762,20 +1916,56 @@ return (
                         </View>
                     </View>
 
-                    {/* Themes Section */}
+                    {/* Background Color Section */}
                     <View style={styles.designCard}>
-                        <Text style={styles.cardSectionTitle}>السمة</Text>
-                        <View style={styles.themeGrid}>
-                            {[ { color: '#fff', name: 'فاتح' }, { color: '#2d2d2d', name: 'داكن' }, { color: '#0a0a0a', name: 'أسود' } ].map(theme => (
-                                <TouchableOpacity 
-                                    key={theme.color} 
-                                    onPress={() => changeTheme(theme.color)} 
-                                    style={[styles.themeCircle, {backgroundColor: theme.color}, bgColor === theme.color && styles.themeCircleActive]}
-                                >
-                                    {bgColor === theme.color && <Ionicons name="checkmark" size={16} color={theme.color === '#fff' ? '#000' : '#fff'} />}
-                                </TouchableOpacity>
-                            ))}
+                        <Text style={styles.cardSectionTitle}>لون الخلفية</Text>
+                        <View style={{flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10}}>
+                            <View style={{width: 30, height: 30, backgroundColor: bgColor, borderRadius: 15, borderWidth: 1, borderColor: '#fff'}} />
+                            <TextInput
+                                style={[styles.textInput, {flex: 1, textAlign: 'left'}]}
+                                placeholder="#RRGGBB"
+                                placeholderTextColor="#666"
+                                value={bgColorHexInput}
+                                onChangeText={handleBgColorHexChange}
+                            />
                         </View>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                            <View style={styles.colorPalette}>
+                                {BG_COLOR_PRESETS.map((c) => (
+                                    <TouchableOpacity
+                                        key={c.color}
+                                        style={[styles.paletteCircle, {backgroundColor: c.color}, bgColor === c.color && styles.paletteCircleActive]}
+                                        onPress={() => changeTheme(c.color)}
+                                    />
+                                ))}
+                            </View>
+                        </ScrollView>
+                    </View>
+
+                    {/* Text Color Section */}
+                    <View style={styles.designCard}>
+                        <Text style={styles.cardSectionTitle}>لون النص</Text>
+                        <View style={{flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10}}>
+                            <View style={{width: 30, height: 30, backgroundColor: textColor, borderRadius: 15, borderWidth: 1, borderColor: '#fff'}} />
+                            <TextInput
+                                style={[styles.textInput, {flex: 1, textAlign: 'left'}]}
+                                placeholder="#RRGGBB"
+                                placeholderTextColor="#666"
+                                value={textColorHexInput}
+                                onChangeText={handleTextColorHexChange}
+                            />
+                        </View>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                            <View style={styles.colorPalette}>
+                                {ADVANCED_COLORS.filter(c => c.color !== '#000000' || true).map((c) => (
+                                    <TouchableOpacity
+                                        key={c.color}
+                                        style={[styles.paletteCircle, {backgroundColor: c.color}, textColor === c.color && styles.paletteCircleActive]}
+                                        onPress={() => handleTextColorPreset(c.color)}
+                                    />
+                                ))}
+                            </View>
+                        </ScrollView>
                     </View>
 
                     {/* Text Brightness Control */}
@@ -1798,8 +1988,8 @@ return (
                     {/* DIALOGUE FORMATTING CARD */}
                     <View style={[styles.advancedCard, !enableDialogue && {opacity: 0.8}]}>
                         <View style={styles.advancedHeader}>
-                            <Switch 
-                                value={enableDialogue} 
+                            <Switch
+                                value={enableDialogue}
                                 onValueChange={(val) => { setEnableDialogue(val); saveSettings({ enableDialogue: val }); }}
                                 trackColor={{ false: "#333", true: "#4ade80" }}
                                 thumbColor={"#fff"}
@@ -1810,39 +2000,36 @@ return (
 
                         {enableDialogue && (
                             <>
-                                {/* Quote Style Selector */}
                                 <Text style={[styles.cardSectionTitle, {marginTop: 10}]}>اختر نمط الأقواس</Text>
                                 <View style={styles.previewRow}>
                                     {QUOTE_STYLES.map((style) => (
-                                        <TouchableOpacity 
+                                        <TouchableOpacity
                                             key={style.id}
                                             style={[
-                                                styles.previewBox, 
+                                                styles.previewBox,
                                                 selectedQuoteStyle === style.id && {backgroundColor: '#1a4030', borderColor: '#4ade80'}
                                             ]}
                                             onPress={() => { setSelectedQuoteStyle(style.id); saveSettings({ selectedQuoteStyle: style.id }); }}
                                         >
                                             <Text style={[
-                                                styles.previewText, 
+                                                styles.previewText,
                                                 selectedQuoteStyle === style.id && {color: '#4ade80'}
                                             ]}>{style.preview}</Text>
                                         </TouchableOpacity>
                                     ))}
                                 </View>
 
-                                {/* Colors */}
                                 <Text style={styles.cardSectionTitle}>اللون</Text>
                                 <View style={styles.colorPalette}>
                                     {ADVANCED_COLORS.map((c) => (
-                                        <TouchableOpacity 
-                                            key={c.color} 
+                                        <TouchableOpacity
+                                            key={c.color}
                                             style={[styles.paletteCircle, {backgroundColor: c.color}, dialogueColor === c.color && styles.paletteCircleActive]}
                                             onPress={() => { setDialogueColor(c.color); saveSettings({ dialogueColor: c.color }); }}
                                         />
                                     ))}
                                 </View>
 
-                                {/* Size Slider (Custom) */}
                                 <View style={styles.sliderRow}>
                                     <Text style={styles.sliderLabel}>{dialogueSize}%</Text>
                                     <CustomSlider
@@ -1856,10 +2043,9 @@ return (
                                     <Text style={styles.sliderTitle}>حجم الحوار</Text>
                                 </View>
 
-                                {/* Hide Quotes Toggle */}
                                 <View style={styles.toggleRow}>
-                                    <Switch 
-                                        value={hideQuotes} 
+                                    <Switch
+                                        value={hideQuotes}
                                         onValueChange={(val) => { setHideQuotes(val); saveSettings({ hideQuotes: val }); }}
                                         trackColor={{ false: "#333", true: "#4ade80" }}
                                         thumbColor={"#fff"}
@@ -1873,10 +2059,10 @@ return (
                     {/* MARKDOWN FORMATTING CARD */}
                     <View style={[styles.advancedCard, !enableMarkdown && {opacity: 0.8}]}>
                         <View style={styles.advancedHeader}>
-                            <Switch 
-                                value={enableMarkdown} 
+                            <Switch
+                                value={enableMarkdown}
                                 onValueChange={(val) => { setEnableMarkdown(val); saveSettings({ enableMarkdown: val }); }}
-                                trackColor={{ false: "#333", true: "#fff" }} // White accent for bold
+                                trackColor={{ false: "#333", true: "#fff" }}
                                 thumbColor={"#fff"}
                             />
                             <View style={{height: 1, flex: 1, backgroundColor: '#333', marginHorizontal: 15}} />
@@ -1885,27 +2071,25 @@ return (
 
                         {enableMarkdown && (
                             <>
-                                {/* 🔥 NEW: Quote Style Selector for Bold */}
                                 <Text style={[styles.cardSectionTitle, {marginTop: 10}]}>اختر نمط الأقواس</Text>
                                 <View style={styles.previewRow}>
                                     {QUOTE_STYLES.map((style) => (
-                                        <TouchableOpacity 
+                                        <TouchableOpacity
                                             key={style.id}
                                             style={[
-                                                styles.previewBox, 
+                                                styles.previewBox,
                                                 selectedMarkdownStyle === style.id && {backgroundColor: '#333', borderColor: '#fff'}
                                             ]}
                                             onPress={() => { setSelectedMarkdownStyle(style.id); saveSettings({ selectedMarkdownStyle: style.id }); }}
                                         >
                                             <Text style={[
-                                                styles.previewText, 
+                                                styles.previewText,
                                                 selectedMarkdownStyle === style.id && {color: '#fff'}
                                             ]}>{style.preview}</Text>
                                         </TouchableOpacity>
                                     ))}
                                 </View>
 
-                                {/* Size Slider */}
                                 <View style={styles.sliderRow}>
                                     <Text style={styles.sliderLabel}>{markdownSize}%</Text>
                                     <CustomSlider
@@ -1919,15 +2103,156 @@ return (
                                     <Text style={styles.sliderTitle}>حجم الخط العريض</Text>
                                 </View>
 
-                                {/* Hide Marks Toggle */}
                                 <View style={styles.toggleRow}>
-                                    <Switch 
-                                        value={hideMarkdownMarks} 
+                                    <Switch
+                                        value={hideMarkdownMarks}
                                         onValueChange={(val) => { setHideMarkdownMarks(val); saveSettings({ hideMarkdownMarks: val }); }}
                                         trackColor={{ false: "#333", true: "#fff" }}
                                         thumbColor={"#fff"}
                                     />
                                     <Text style={styles.toggleLabel}>إخفاء علامات التنسيق (مثل **)</Text>
+                                </View>
+                            </>
+                        )}
+                    </View>
+
+                    {/* NEW: BRACKET FORMATTING CARD */}
+                    <View style={[styles.advancedCard, !enableBracket && {opacity: 0.8}]}>
+                        <View style={styles.advancedHeader}>
+                            <Switch
+                                value={enableBracket}
+                                onValueChange={(val) => { setEnableBracket(val); saveSettings({ enableBracket: val }); }}
+                                trackColor={{ false: "#333", true: "#3b82f6" }}
+                                thumbColor={"#fff"}
+                            />
+                            <View style={{height: 1, flex: 1, backgroundColor: '#333', marginHorizontal: 15}} />
+                            <Text style={[styles.advancedTitle, {color: '#3b82f6'}]}>الأقواس المربعة [ ]</Text>
+                        </View>
+
+                        {enableBracket && (
+                            <>
+                                <Text style={[styles.cardSectionTitle, {marginTop: 10}]}>اختر نمط الأقواس الداخلية</Text>
+                                <View style={styles.previewRow}>
+                                    {QUOTE_STYLES.map((style) => (
+                                        <TouchableOpacity
+                                            key={style.id}
+                                            style={[
+                                                styles.previewBox,
+                                                selectedBracketStyle === style.id && {backgroundColor: '#1a2a40', borderColor: '#3b82f6'}
+                                            ]}
+                                            onPress={() => { setSelectedBracketStyle(style.id); saveSettings({ selectedBracketStyle: style.id }); }}
+                                        >
+                                            <Text style={[
+                                                styles.previewText,
+                                                selectedBracketStyle === style.id && {color: '#3b82f6'}
+                                            ]}>{style.preview}</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+
+                                <Text style={styles.cardSectionTitle}>اللون</Text>
+                                <View style={styles.colorPalette}>
+                                    {ADVANCED_COLORS.map((c) => (
+                                        <TouchableOpacity
+                                            key={c.color}
+                                            style={[styles.paletteCircle, {backgroundColor: c.color}, bracketColor === c.color && styles.paletteCircleActive]}
+                                            onPress={() => { setBracketColor(c.color); saveSettings({ bracketColor: c.color }); }}
+                                        />
+                                    ))}
+                                </View>
+
+                                <View style={styles.sliderRow}>
+                                    <Text style={styles.sliderLabel}>{bracketSize}%</Text>
+                                    <CustomSlider
+                                        minimumValue={80}
+                                        maximumValue={150}
+                                        step={5}
+                                        value={bracketSize}
+                                        onValueChange={(val) => { setBracketSize(val); saveSettings({ bracketSize: val }); }}
+                                        activeColor="#3b82f6"
+                                    />
+                                    <Text style={styles.sliderTitle}>حجم النص</Text>
+                                </View>
+
+                                <View style={styles.toggleRow}>
+                                    <Switch
+                                        value={hideBracketMarks}
+                                        onValueChange={(val) => { setHideBracketMarks(val); saveSettings({ hideBracketMarks: val }); }}
+                                        trackColor={{ false: "#333", true: "#3b82f6" }}
+                                        thumbColor={"#fff"}
+                                    />
+                                    <Text style={styles.toggleLabel}>إخفاء الأقواس [ ]</Text>
+                                </View>
+                            </>
+                        )}
+                    </View>
+
+                    {/* NEW: CUSTOM FORMATTING CARD */}
+                    <View style={[styles.advancedCard, !enableCustom && {opacity: 0.8}]}>
+                        <View style={styles.advancedHeader}>
+                            <Switch
+                                value={enableCustom}
+                                onValueChange={(val) => { setEnableCustom(val); saveSettings({ enableCustom: val }); }}
+                                trackColor={{ false: "#333", true: "#f97316" }}
+                                thumbColor={"#fff"}
+                            />
+                            <View style={{height: 1, flex: 1, backgroundColor: '#333', marginHorizontal: 15}} />
+                            <Text style={[styles.advancedTitle, {color: '#f97316'}]}>تنسيق مخصص</Text>
+                        </View>
+
+                        {enableCustom && (
+                            <>
+                                <Text style={[styles.cardSectionTitle, {marginTop: 10}]}>علامة البداية</Text>
+                                <TextInput
+                                    style={[styles.textInput, {marginBottom: 10}]}
+                                    placeholder="مثال: <"
+                                    placeholderTextColor="#666"
+                                    value={customOpenMark}
+                                    onChangeText={(val) => { setCustomOpenMark(val); saveSettings({ customOpenMark: val }); }}
+                                    textAlign="center"
+                                />
+                                <Text style={styles.cardSectionTitle}>علامة النهاية</Text>
+                                <TextInput
+                                    style={[styles.textInput, {marginBottom: 15}]}
+                                    placeholder="مثال: >"
+                                    placeholderTextColor="#666"
+                                    value={customCloseMark}
+                                    onChangeText={(val) => { setCustomCloseMark(val); saveSettings({ customCloseMark: val }); }}
+                                    textAlign="center"
+                                />
+
+                                <Text style={styles.cardSectionTitle}>اللون</Text>
+                                <View style={styles.colorPalette}>
+                                    {ADVANCED_COLORS.map((c) => (
+                                        <TouchableOpacity
+                                            key={c.color}
+                                            style={[styles.paletteCircle, {backgroundColor: c.color}, customColor === c.color && styles.paletteCircleActive]}
+                                            onPress={() => { setCustomColor(c.color); saveSettings({ customColor: c.color }); }}
+                                        />
+                                    ))}
+                                </View>
+
+                                <View style={styles.sliderRow}>
+                                    <Text style={styles.sliderLabel}>{customSize}%</Text>
+                                    <CustomSlider
+                                        minimumValue={80}
+                                        maximumValue={150}
+                                        step={5}
+                                        value={customSize}
+                                        onValueChange={(val) => { setCustomSize(val); saveSettings({ customSize: val }); }}
+                                        activeColor="#f97316"
+                                    />
+                                    <Text style={styles.sliderTitle}>حجم النص</Text>
+                                </View>
+
+                                <View style={styles.toggleRow}>
+                                    <Switch
+                                        value={hideCustomMarks}
+                                        onValueChange={(val) => { setHideCustomMarks(val); saveSettings({ hideCustomMarks: val }); }}
+                                        trackColor={{ false: "#333", true: "#f97316" }}
+                                        thumbColor={"#fff"}
+                                    />
+                                    <Text style={styles.toggleLabel}>إخفاء علامات التنسيق</Text>
                                 </View>
                             </>
                         )}
@@ -2014,6 +2339,7 @@ addButton: { backgroundColor: '#4a7cc7', flexDirection: 'row', alignItems: 'cent
 addButtonText: { color: '#fff', fontWeight: 'bold' },
 listLabel: { color: '#666', fontSize: 12, textAlign: 'right', marginRight: 15, marginBottom: 10 },
 replacementItem: { backgroundColor: '#1a1a1a', borderRadius: 8, padding: 12, marginBottom: 8, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: '#333' },
+replacementItemEditing: { borderColor: '#4a7cc7', backgroundColor: '#1a2a3a' },
 replacementInfo: { flex: 1, alignItems: 'flex-end' },
 replacementText: { color: '#ddd', fontSize: 14, textAlign: 'right' },
 replacementActions: { flexDirection: 'column', gap: 8, paddingRight: 10, borderRightWidth: 1, borderRightColor: '#333' },
@@ -2030,7 +2356,7 @@ modalBtnText: { color: '#fff', fontWeight: 'bold' },
 searchBar: { flexDirection: 'row-reverse', alignItems: 'center', backgroundColor: '#222', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, gap: 5, borderWidth: 1, borderColor: '#333' },
 searchInput: { flex: 1, color: '#fff', textAlign: 'right', fontSize: 14 },
 
-// --- NEW REDESIGNED SETTINGS STYLES ---
+// --- REDESIGNED SETTINGS STYLES ---
 designCard: { backgroundColor: '#111', borderRadius: 16, padding: 15, marginBottom: 15, borderWidth: 1, borderColor: '#222' },
 cardSectionTitle: { color: '#888', fontSize: 13, marginBottom: 12, textAlign: 'right', fontWeight: '600', letterSpacing: 0.5 },
 fontList: { flexDirection: 'row-reverse', paddingVertical: 5 },
@@ -2045,14 +2371,14 @@ themeGrid: { flexDirection: 'row-reverse', gap: 15, justifyContent: 'flex-start'
 themeCircle: { width: 45, height: 45, borderRadius: 22.5, borderWidth: 2, borderColor: '#333', alignItems: 'center', justifyContent: 'center' },
 themeCircleActive: { borderColor: '#4a7cc7', borderWidth: 2 },
 
-// --- ADVANCED FORMATTING STYLES (Matching Image) ---
+// --- ADVANCED FORMATTING STYLES ---
 advancedCard: { backgroundColor: '#0f0f0f', borderRadius: 20, padding: 20, marginBottom: 20, borderWidth: 1, borderColor: '#222' },
 advancedHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
 advancedTitle: { color: '#4ade80', fontSize: 16, fontWeight: 'bold', letterSpacing: 0.5 },
 previewRow: { flexDirection: 'row-reverse', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 5 },
 previewBox: { flexGrow: 1, paddingVertical: 10, paddingHorizontal: 15, borderRadius: 10, backgroundColor: '#161616', borderWidth: 1, borderColor: '#333', alignItems: 'center', justifyContent: 'center', minWidth: '18%' },
 previewText: { color: '#666', fontSize: 14, fontWeight: '600' },
-colorPalette: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 25 },
+colorPalette: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 25, flexWrap: 'wrap', gap: 5 },
 paletteCircle: { width: 32, height: 32, borderRadius: 16 },
 paletteCircleActive: { borderWidth: 2, borderColor: '#fff' },
 sliderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 25, gap: 10 },
