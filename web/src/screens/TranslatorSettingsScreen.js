@@ -66,14 +66,17 @@ export default function TranslatorSettingsScreen({ navigation }) {
       }
   };
 
-  // إضافة مزوّد جديد
+  // إضافة مزوّد جديد (معدل ليشمل نموذج ChatGPT Android)
   const addProvider = () => {
       const newPriority = providers.length > 0 ? Math.max(...providers.map(p => p.priority)) + 1 : 0;
       const newProvider = {
           providerId: `provider_${Date.now()}`,
           name: 'مزوّد جديد',
           baseUrl: '',
-          models: [{ modelId: 'gemini-2.5-flash', modelName: 'Gemini 2.5 Flash' }],
+          models: [
+              { modelId: 'gemini-2.5-flash', modelName: 'Gemini 2.5 Flash' },
+              { modelId: 'auto', modelName: 'ChatGPT Android' }
+          ],
           apiKeys: [],
           selectedModel: 'gemini-2.5-flash',
           priority: newPriority
@@ -250,7 +253,7 @@ export default function TranslatorSettingsScreen({ navigation }) {
                                     style={styles.miniInput}
                                     value={provider.name}
                                     onChangeText={(text) => updateProviderField(provider.providerId, 'name', text)}
-                                    placeholder="مثل: Gemini, OpenRouter"
+                                    placeholder="مثل: Gemini, OpenRouter, ChatGPT Android"
                                     placeholderTextColor="#666"
                                 />
                                 <Text style={styles.miniLabel}>Base URL (اختياري)</Text>
@@ -265,6 +268,7 @@ export default function TranslatorSettingsScreen({ navigation }) {
 
                                 {/* المفاتيح */}
                                 <Text style={styles.miniLabel}>مفاتيح API (كل مفتاح في سطر)</Text>
+                                <Text style={styles.hintSmall}>🔑 بالنسبة لـ ChatGPT Android: اترك الحقل فارغاً أو اكتب أي نص (لا يحتاج مفتاح حقيقي)</Text>
                                 <TextInput
                                     style={styles.keysInputSmall}
                                     multiline
@@ -381,6 +385,7 @@ const styles = StyleSheet.create({
   
   sectionLabel: { color: '#fff', fontSize: 16, fontWeight: 'bold', marginBottom: 5, textAlign: 'right' },
   hint: { color: '#888', fontSize: 12, textAlign: 'right', marginBottom: 15 },
+  hintSmall: { color: '#888', fontSize: 10, textAlign: 'right', marginBottom: 5 },
   sectionTitle: { color: '#fff', fontSize: 18, fontWeight: 'bold', marginBottom: 15, marginTop: 25, textAlign: 'right' },
 
   // زر إضافة مزوّد
