@@ -1,25 +1,28 @@
 {
   "expo": {
-    "name": "chat",
-    "slug": "snack-f5ab11ab-1bba-46a1-9937-a7536cc551da",
+    "name": "ZEUS Novels",
+    "slug": "zeus-novels",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
+    "scheme": "aplcionszeus",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#000000"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "zeusnovels.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "package": "com.zeus.app",
       "edgeToEdgeEnabled": true
     },
     "web": {
